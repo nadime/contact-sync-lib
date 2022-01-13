@@ -171,6 +171,15 @@ class Contact(ABC):
             s = s.append(append)
         return s
 
+    @staticmethod
+    def _make_column_index(index):
+        index = list(set(index))
+        if "ln" not in index:
+            index.insert(0,"ln")
+        if "fn" not in index:
+            index.insert(0,"fn")
+        return index
+
     @classmethod
     def compare_df(cls, c1, c2, include_all=False):
         s1 = c1.to_series()
@@ -194,7 +203,7 @@ class Contact(ABC):
                 index = [
                     k for k in index if k in results and results[k] in [Comparison.Left, Comparison.Right]
                 ]
-
+            index = Contact._make_column_index(index)
             for k in index:
                 if k.startswith("_") or k in [ "lmod", "created", "lmoddt" ]:
                     continue
