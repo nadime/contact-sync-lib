@@ -208,7 +208,7 @@ class Contact(ABC):
 
     @staticmethod
     def _is_addr_indexfield(fld):
-        return "addr" in fld
+        return "_" in fld
 
     @classmethod
     def compare_df(cls, c1, c2, include_all=False):
