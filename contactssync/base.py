@@ -32,10 +32,22 @@ def _isnull(s):
 
 @attr.s(auto_attribs=True, eq=False)
 class Contact(ABC):
-    _id: OptStr = None
-    _fs: OptStr = None
-    _etag: OptStr = None
-    _source_dict: Dict[str, Any] = None
+    _id: OptStr = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
+    _fs: OptStr = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
+    _etag: OptStr = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
+    _source_dict: Dict[str, Any] = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
     fn: OptStr = None
     ln: OptStr = None
     mn: OptStr = None
@@ -95,10 +107,17 @@ class Contact(ABC):
     isspousemain: Optional[bool] = None
     linkedin: OptStr = None
     photo: OptStr = None
-    created: OptStr = None
-    lmod: OptStr = None
+    created: OptStr = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
+    lmod: OptStr = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
     lmoddt: datetime.datetime = attr.ib(
-        factory=functools.partial(datetime.datetime.fromtimestamp,0)
+        factory=functools.partial(datetime.datetime.fromtimestamp,0),
+        metadata={"is_metadata": True}
     )
 
     def __attrs_post_init__(self):
@@ -108,7 +127,6 @@ class Contact(ABC):
     @classmethod
     def is_primary(cls, fld):
         return False
-
 
     @abstractclassmethod
     def from_api(cls, row, **kwargs):
@@ -171,8 +189,9 @@ class Contact(ABC):
             s = s.append(append)
         return s
 
-    @staticmethod
-    def _make_column_index(index):
+    @classmethod
+    def _make_column_index(cls,index):
+        final_index = []
         index = list(set(index))
         if len(index) == 0:
             return index
@@ -180,7 +199,11 @@ class Contact(ABC):
             index.insert(0,"ln")
         if "fn" not in index:
             index.insert(0,"fn")
-        return index
+        for k in index:
+            if getattr(getattr(fields(cls),k),"metadata").get("is_metadata",False):
+                continue
+            final_index.append(k)
+        return final_index
 
     @staticmethod
     def _is_addr_indexfield(fld):
@@ -208,7 +231,7 @@ class Contact(ABC):
             else:
                 index = [
                     k for k in index if (
-                        Contact._is_addr_indexfield(k) or
+                        self._is_addr_indexfield(k) or
                         (k in results and results[k] in [Comparison.Left,Comparison.Right])
                     )
                 ]
@@ -216,8 +239,6 @@ class Contact(ABC):
             if len(index) is None:
                 return pd.DataFrame()
             for k in index:
-                if k.startswith("_") or k in [ "lmod", "created", "lmoddt" ]:
-                    continue
                 if _isnull(s1.loc[k]) and _isnull(s2.loc[k]):
                     continue
                 keys.append(k)
