@@ -258,7 +258,9 @@ class GoogleAddress(Address):
     @classmethod
     def from_api(cls, row, ctype=None):
         item = GoogleAddress()
-        addresses = {x["formattedType"].replace(" ","") : x for x in row.get('addresses', {})}
+        addresses = {x.get("formattedType","Unknown").replace(" ","") : x for x in row.get('addresses', {})}
+        if "Home" not in addresses and "Unknown" in addresses:
+            addresses["Home"] = address["Unknown"]
         addr_dict = addresses.get(ctype.value, {})
 
         streetaddr = _rowget(addr_dict, "streetAddress")
