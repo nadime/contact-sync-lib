@@ -174,11 +174,17 @@ class Contact(ABC):
     @staticmethod
     def _make_column_index(index):
         index = list(set(index))
+        if len(index) == 0:
+            return index
         if "ln" not in index:
             index.insert(0,"ln")
         if "fn" not in index:
             index.insert(0,"fn")
         return index
+
+    @staticmethod
+    def _is_addr_indexfield(fld):
+        return "addr" in fld
 
     @classmethod
     def compare_df(cls, c1, c2, include_all=False):
@@ -201,9 +207,14 @@ class Contact(ABC):
                 return pd.DataFrame()
             else:
                 index = [
-                    k for k in index if k in results and results[k] in [Comparison.Left, Comparison.Right]
+                    k for k in index if (
+                        Contact._is_addr_indexfield(k) or
+                        (k in results and results[k] in [Comparison.Left,Comparison.Right])
+                    )
                 ]
             index = Contact._make_column_index(index)
+            if len(index) is None:
+                return pd.DataFrame()
             for k in index:
                 if k.startswith("_") or k in [ "lmod", "created", "lmoddt" ]:
                     continue
@@ -217,6 +228,8 @@ class Contact(ABC):
     @classmethod
     def compare_visual(cls, c1, c2, compare_all=False):
         df = cls.compare_df(c1, c2, include_all=compare_all)
+        if len(df) == 0:
+            return None
         fs1 = c1._fs
         fs2 = c2._fs
         if fs1 == fs2:
@@ -268,10 +281,13 @@ class Contact(ABC):
 
     @staticmethod
     def _compare_attr(selfattr, otherattr, default_compare=Comparison.EqualOrUnclear):
+        compval = None
         if hasattr(selfattr, "compare"):
-            return selfattr.compare(otherattr)
+            compval = selfattr.compare(otherattr)
         elif hasattr(otherattr, "compare"):
-            return otherattr.__class__.compare(selfattr, otherattr)
+            compval = otherattr.__class__.compare(selfattr, otherattr)
+        if compval == Comparison.EqualOrUnclear:
+            return default_compare
 
         if _both_none(selfattr, otherattr):
             return True, Comparison.BothInvalid
