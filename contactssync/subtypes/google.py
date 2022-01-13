@@ -260,7 +260,7 @@ class GoogleAddress(Address):
         item = GoogleAddress()
         addresses = {x.get("formattedType","Unknown").replace(" ","") : x for x in row.get('addresses', {})}
         if "Home" not in addresses and "Unknown" in addresses:
-            addresses["Home"] = address["Unknown"]
+            addresses["Home"] = addresses["Unknown"]
         addr_dict = addresses.get(ctype.value, {})
 
         streetaddr = _rowget(addr_dict, "streetAddress")
