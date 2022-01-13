@@ -231,7 +231,7 @@ class Contact(ABC):
             else:
                 index = [
                     k for k in index if (
-                        self._is_addr_indexfield(k) or
+                        cls._is_addr_indexfield(k) or
                         (k in results and results[k] in [Comparison.Left,Comparison.Right])
                     )
                 ]
