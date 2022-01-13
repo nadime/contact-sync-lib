@@ -304,11 +304,13 @@ class Contact(ABC):
     def _compare_attr(selfattr, otherattr, default_compare=Comparison.EqualOrUnclear):
         compval = None
         if hasattr(selfattr, "compare"):
-            compval = selfattr.compare(otherattr)
+            compval, compwhich = selfattr.compare(otherattr)
         elif hasattr(otherattr, "compare"):
-            compval = otherattr.__class__.compare(selfattr, otherattr)
-        if compval == Comparison.EqualOrUnclear:
-            return default_compare
+            compval, compwhich = otherattr.__class__.compare(selfattr, otherattr)
+        if compval is not None and not compval and compwhich == Comparison.EqualOrUnclear:
+            return compval, default_compare
+        elif compval is not None:
+            return compval, compwhich
 
         if _both_none(selfattr, otherattr):
             return True, Comparison.BothInvalid
