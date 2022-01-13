@@ -200,7 +200,8 @@ class Contact(ABC):
         if "fn" not in index:
             index.insert(0,"fn")
         for k in index:
-            if getattr(getattr(attr.fields(cls),k),"metadata").get("is_metadata",False):
+            fld = getattr(attr.fields(cls),k)
+            if fld is not None and getattr(fld,"metadata").get("is_metadata",False):
                 continue
             final_index.append(k)
         return final_index
