@@ -23,6 +23,12 @@ class Search:
     _by_foreign_id: Dict[str, Dict[str, Contact]] = None
     _skip_duplicates: bool = True
 
+    def __len__(self):
+        return len(contacts)
+
+    def __iter__(self):
+        return self.contacts.__iter__()
+
     def _complain_about_unmatching_duplicate(self, orig, dup):
         if self._skip_duplicates:
             return

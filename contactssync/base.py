@@ -106,7 +106,10 @@ class Contact(ABC):
     iscombosurname: Optional[bool] = None
     isspousemain: Optional[bool] = None
     linkedin: OptStr = None
-    photo: OptStr = None
+    photo: OptStr = attr.ib(
+        default=None,
+        metadata={"is_metadata": True}
+    )
     created: OptStr = attr.ib(
         default=None,
         metadata={"is_metadata": True}
@@ -147,20 +150,25 @@ class Contact(ABC):
 
     def dedup_emails(self):
         # pref email 1 > email 2 > authorized email1()
-        emails = [ "email1", "email2", "authemail" ]
+        emails = [
+            fld.name for fld in attr.fields(self.__class__) if "email" in fld.name
+        ]
         email_pairs = itertools.combinations(emails, r=2)
         for e1, e2 in email_pairs:
             self._dedup_attrs(e1, e2)
 
     def dedup_phones(self):
-        phones = [ "mobilephone", "mobile2phone", "mobile3phone",
-                   "workphone", "homephone", "work2phone", "home2phone",
-                   "otherphone", "other2phone", "mainphone" ]
+        phones = [
+            fld.name for fld in attr.fields(self.__class__) if "phone" in fld.name
+        ]
         phone_pairs = itertools.combinations(phones, r=2)
         for p1, p2 in phone_pairs:
             self._dedup_attrs(p1, p2)
 
     def dedup_addrs(self):
+        addresses = [
+            fld.name for fld in attr.fields(self.__class__) if "addr" in fld.name
+        ]
         addresses = [ "haddr", "h2addr", "waddr" ]
         addr_pairs = itertools.combinations(addresses, r=2)
         for a1, a2 in addr_pairs:
@@ -237,6 +245,7 @@ class Contact(ABC):
                     )
                 ]
             index = Contact._make_column_index(index)
+            index = [ k for k in index if ( k in s1.index and k in s2.index ) ]
             if len(index) is None:
                 return pd.DataFrame()
             for k in index:
@@ -307,7 +316,7 @@ class Contact(ABC):
         if hasattr(selfattr, "compare"):
             compval, compwhich = selfattr.compare(otherattr)
         elif hasattr(otherattr, "compare"):
-            compval, compwhich = otherattr.__class__.compare(selfattr, otherattr)
+            compval, compwhich = otherattr.compare(selfattr)
         if compval is not None and not compval and compwhich == Comparison.EqualOrUnclear:
             return compval, default_compare
         elif compval is not None:

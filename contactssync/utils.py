@@ -1,6 +1,7 @@
 
 from collections import defaultdict
 import itertools
+import re
 
 def _chunks(lst, n):
     for i in range(0, len(lst), n):
@@ -21,6 +22,11 @@ def _str_not_none(s):
     if s is None:
         return ""
     return s
+
+def _strip_bad_chars(s):
+    if s is None:
+        return None
+    return re.sub(r"[^a-zA-Z0-9^_^-^\s^&^+^\<^\>^\[^\]^\(^\)^|^#^\/]", "", s).rstrip('\x00')
 
 def _tolower(s):
     return _str_not_none(s).lower()

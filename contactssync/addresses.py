@@ -6,17 +6,17 @@ import pandas as pd
 import re
 
 from .types import OptStr, ContactType, Comparison
-from .utils import _rowget, _tolower, _str_not_none
+from .utils import _rowget, _tolower, _str_not_none, _strip_bad_chars
 
 @attr.s(auto_attribs=True)
 class Address:
     _type: ContactType = attr.ib(eq=False, default=ContactType.Unknown)
-    addr1: OptStr = attr.ib(eq=_tolower, default=None)
-    addr2: OptStr = attr.ib(eq=_tolower, default=None)
-    city: OptStr = attr.ib(eq=_tolower, default=None)
-    region: OptStr = attr.ib(eq=_tolower, default=None)
-    zip: OptStr = attr.ib(eq=_tolower, default=None)
-    country: OptStr = attr.ib(eq=_tolower, default=None)
+    addr1: OptStr = attr.ib(eq=_tolower, default=None, converter=_strip_bad_chars)
+    addr2: OptStr = attr.ib(eq=_tolower, default=None, converter=_strip_bad_chars)
+    city: OptStr = attr.ib(eq=_tolower, default=None, converter=_strip_bad_chars)
+    region: OptStr = attr.ib(eq=_tolower, default=None, converter=_strip_bad_chars)
+    zip: OptStr = attr.ib(eq=_tolower, default=None, converter=_strip_bad_chars)
+    country: OptStr = attr.ib(eq=_tolower, default=None, converter=_strip_bad_chars)
 
     def to_series(self):
         t = self._type.value.lower()

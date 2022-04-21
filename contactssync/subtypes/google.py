@@ -159,6 +159,7 @@ class GoogleConnection(Connection):
         update_fields = self._get_updated_fields(c)
         GoogleConnection._strip_non_create_fields(update_fields, strip_etag=False)
         etag = c._etag
+        print(update_fields)
         if "etag" in update_fields:
             etag = update_fields["etag"]
         old_update_fields = dict(update_fields)
@@ -179,15 +180,11 @@ class GoogleConnection(Connection):
         ).execute()
 
     def update(self, c, fields_to_update=None):
-        #tries = 0
-        #while(tries < 5):
-        #    tries += 1
         try:
             self._do_update(c, fields_to_update)
         except HttpError as e:
             if str(e).lower().find("etag is different") >= 0:
                 self._do_update(c, fields_to_update)
-                #continue
             else:
                 raise
 
@@ -579,8 +576,6 @@ class GoogleContact(Contact):
             c.email1 = emails[0]
         if len(emails) > 1:
             c.email2 = emails[1]
-        if c.email1 == c.email2:
-            c.email2 = None
         c.authemail = _rowget(emails_dict, "Authorized")
 
         phones_dict = _make_dict_from_list(
