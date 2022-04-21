@@ -159,7 +159,6 @@ class GoogleConnection(Connection):
         update_fields = self._get_updated_fields(c)
         GoogleConnection._strip_non_create_fields(update_fields, strip_etag=False)
         etag = c._etag
-        print(update_fields)
         if "etag" in update_fields:
             etag = update_fields["etag"]
         old_update_fields = dict(update_fields)
