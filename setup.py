@@ -1,7 +1,11 @@
 
 from distutils.core import setup
 from os.path import exists
-from contactsync import __version__
+import sys
+sys.path.append("./")
+from contactssync import __version__
+print(__version__)
+sys.exit(0)
 
 setup(
       name = 'contactssync',         # How you named your package folder (MyLib)
