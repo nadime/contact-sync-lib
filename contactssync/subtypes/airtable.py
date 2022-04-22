@@ -138,23 +138,23 @@ class AirtableAddress(Address):
         iprefix = Address._get_type_prefix(ctype)
         item = Address()
 
-        streetaddr = _rowget(row,f"{iprefix} Street Address")
+        streetaddr = _strip_bad_chars(_rowget(row,f"{iprefix} Street Address"))
         if streetaddr is not None:
             streetaddrs = streetaddr.split("\n")
             item.addr1 = streetaddrs[0]
             if len(streetaddrs) > 1:
                 item.addr2 = streetaddrs[1]
 
-        addr2 = _rowget(row,f"{iprefix} Street Address 2")
+        addr2 = _strip_bad_chars(_rowget(row,f"{iprefix} Street Address 2"))
         if addr2 is not None:
             if item.addr2 is not None:
                 item.addr2 += addr2
             else:
                 item.addr2 = addr2
-        item.city  = _rowget(row,f"{iprefix} City")
-        item.region = _rowget(row,f"{iprefix} State")
-        item.country = _rowget(row,f"{iprefix} Country/Region")
-        item.zip = _rowget(row,f"{iprefix} Zip")
+        item.city  = _strip_bad_chars(_rowget(row,f"{iprefix} City"))
+        item.region = _strip_bad_chars(_rowget(row,f"{iprefix} State"))
+        item.country = _strip_bad_chars(_rowget(row,f"{iprefix} Country/Region"))
+        item.zip = _strip_bad_chars(_rowget(row,f"{iprefix} Zip"))
         item._type = ctype
         item.adjust_zip()
         item.adjust_country()

@@ -269,23 +269,23 @@ class GoogleAddress(Address):
             addresses["Home"] = addresses["Unknown"]
         addr_dict = addresses.get(ctype.value, {})
 
-        streetaddr = _rowget(addr_dict, "streetAddress")
+        streetaddr = _strip_bad_chars(_rowget(addr_dict, "streetAddress"))
         if streetaddr is not None:
             streetaddrs = streetaddr.split("\n")
             item.addr1 = streetaddrs[0]
             if len(streetaddrs) > 1:
                 item.addr2 = streetaddrs[1]
 
-        addr2 = _rowget(addr_dict, "extendedAddress")
+        addr2 = _strip_bad_chars(_rowget(addr_dict, "extendedAddress"))
         if addr2 is not None:
             if item.addr2 is not None:
                 item.addr2 += addr2
             else:
                 item.addr2 = addr2
-        item.city  = _rowget(addr_dict, "city")
-        item.region = _rowget(addr_dict, "region")
-        item.country = _rowget(addr_dict, "country")
-        item.zip = _rowget(addr_dict, "postalCode")
+        item.city  = _strip_bad_chars(_rowget(addr_dict, "city"))
+        item.region = _strip_bad_chars(_rowget(addr_dict, "region"))
+        item.country = _strip_bad_chars(_rowget(addr_dict, "country"))
+        item.zip = _strip_bad_chars(_rowget(addr_dict, "postalCode"))
         item._type = ctype
         item.adjust_zip()
         item.adjust_country()
