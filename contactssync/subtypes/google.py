@@ -1,5 +1,6 @@
 import attr
 import collections
+import datetime
 import dateutil
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -737,4 +738,8 @@ class GoogleContact(Contact):
             _rowget(row["metadata"],"sources",[]),keyname="type",valname="updateTime", error_on_missing=False,
         )
         c.lmoddt = dateutil.parser.isoparse(metadata["CONTACT"])
+        if c.created is None:
+            c.createddt = datetime.datetime(datetime.MAXYEAR, 1, 1,0,0,0, tzinfo=datetime.timezone.utc)
+        else:
+            c.createddt = dateutil.parser.isoparse(c.created)
         return c

@@ -118,6 +118,10 @@ class Contact(ABC):
         default=None,
         metadata={"is_metadata": True}
     )
+    createddt: datetime.datetime = attr.ib(
+        factory=functools.partial(datetime.datetime.fromtimestamp,0),
+        metadata={"is_metadata": True}
+    )
     lmoddt: datetime.datetime = attr.ib(
         factory=functools.partial(datetime.datetime.fromtimestamp,0),
         metadata={"is_metadata": True}
@@ -391,6 +395,8 @@ class Contact(ABC):
             if attrname[0] == "_":
                 continue
             if attrname == "lmoddt":
+                continue
+            if attrname == "createddt":
                 continue
             root, num = Contact.get_field_parts(attrname)
             if root not in roots:

@@ -1,6 +1,7 @@
 import attr
 from airtable import Airtable
 import collections
+import datetime
 import dateutil
 import functools
 
@@ -445,4 +446,7 @@ class AirtableContact(Contact):
             c.lmoddt = dateutil.parser.isoparse(c.lmod)
         except ValueError:
             c.lmoddt = None
+        if c.created is None:
+            c.createddt = datetime.datetime(datetime.MAXYEAR, 1, 1,0,0,0, tzinfo=datetime.timezone.utc)
+            c.createddt = dateutil.parser.isoparse(c.created)
         return c
