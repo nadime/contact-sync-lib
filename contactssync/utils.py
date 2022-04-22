@@ -26,7 +26,7 @@ def _str_not_none(s):
 def _strip_bad_chars(s):
     if s is None:
         return None
-    return re.sub(r"[^a-zA-Z0-9^_^-^\s^&^+^\<^\>^\[^\]^\(^\)^|^#^\/]", "", s).rstrip('\x00')
+    return re.sub(r"[^a-zA-Z0-9^_^\-^\s^&^+^\<^\>^\[^\]^\(^\)^|^#^\/^\'\.\@]", "", s).rstrip('\x00')
 
 def _tolower(s):
     return _str_not_none(s).lower()

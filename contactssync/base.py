@@ -378,7 +378,11 @@ class Contact(ABC):
         # base preference on which was updated first in the absence of anything else
         # (like a field considering a type primary)
         preferred_comparison = Comparison.EqualOrUnclear
-        if self.lmoddt > other.lmoddt:
+        if self.lmoddt is None:
+            preferred_comparison = Comparison.Right
+        elif other.lmoddt is None:
+            preferred_comparison = Comparison.Left
+        elif self.lmoddt > other.lmoddt:
             preferred_comparison = Comparison.Left
         else:
             preferred_comparison = Comparison.Right

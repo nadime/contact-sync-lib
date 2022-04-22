@@ -33,11 +33,11 @@ class Connection:
         return [c for c in clist if c is not None]
 
     @abstractmethod
-    def get(self, id):
+    def get(self, id, convert=True):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_by_name(self, fn, ln):
+    def get_by_name(self, fn, ln, convert=True):
         raise NotImplementedError()
 
     @abstractmethod

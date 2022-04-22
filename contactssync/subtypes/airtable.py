@@ -14,6 +14,7 @@ from ..utils import (
     _date_to_ymd,
     _make_dict_from_list,
     _chunks,
+    _strip_bad_chars,
 )
 from ..phones import Phone
 from ..connect import Connection
@@ -39,8 +40,10 @@ class AirtableConnection(Connection):
     def contact_to_dict(cls, c, **kwargs):
         return AirtableContact.to_api(c, **kwargs)
 
-    def get(self, id):
-        return self._convert_to_contact_and_drop_none(self._atb.get(id))[0]
+    def get(self, id, convert=True):
+        if convert:
+            return self._convert_to_contact_and_drop_none(self._atb.get(id))[0]
+        return self._atb.get(id)
 
     @classmethod
     def build_query_formula(cls, fields, and_or="AND"):
@@ -54,13 +57,14 @@ class AirtableConnection(Connection):
         query_string += ")"
         return query_string
 
-    def query(self, query_dict):
-        return self._convert_to_contact_and_drop_none(
-            self._atb.get_all(formula=self.build_query_formula(query_dict)),
-        )
+    def query(self, query_dict, convert=True):
+        vals = self._atb.get_all(formula=self.build_query_formula(query_dict))
+        if convert:
+            return self._convert_to_contact_and_drop_none(vals)
+        return vals
 
-    def get_by_name(self, fn, ln):
-        return self.query({"First Name": fn, "Last Name": ln})
+    def get_by_name(self, fn, ln, convert=True):
+        return self.query({"First Name": fn, "Last Name": ln}, convert=convert)
 
     def create(self, d):
         if "fields" not in d:
@@ -162,12 +166,12 @@ class AirtableAddress(Address):
         if addr is None or addr.countfields() == 0:
             return d
         prefix = Address._get_type_prefix(addr._type)
-        d[f"{prefix} Street Address"] = _str_not_none(getattr(addr, "addr1", ""))
-        d[f"{prefix} Street Address 2"] = _str_not_none(getattr(addr, "addr2", ""))
-        d[f"{prefix} City"] = _str_not_none(getattr(addr, "city", ""))
-        d[f"{prefix} State"] = _str_not_none(getattr(addr, "region", ""))
-        d[f"{prefix} Zip"] = _str_not_none(getattr(addr, "zip", ""))
-        d[f"{prefix} Country/Region"] = _str_not_none(getattr(addr, "country", ""))
+        d[f"{prefix} Street Address"] = _strip_bad_chars(_str_not_none(getattr(addr, "addr1", "")))
+        d[f"{prefix} Street Address 2"] = _strip_bad_chars(_str_not_none(getattr(addr, "addr2", "")))
+        d[f"{prefix} City"] = _strip_bad_chars(_str_not_none(getattr(addr, "city", "")))
+        d[f"{prefix} State"] = _strip_bad_chars(_str_not_none(getattr(addr, "region", "")))
+        d[f"{prefix} Zip"] = _strip_bad_chars(_str_not_none(getattr(addr, "zip", "")))
+        d[f"{prefix} Country/Region"] = _strip_bad_chars(_str_not_none(getattr(addr, "country", "")))
         return d
 
 class AirtableContact(Contact):
@@ -221,36 +225,36 @@ class AirtableContact(Contact):
             d["Anniversary"] = c.anniversary
 
         if c.email1 is not None:
-            d["Email Address 1"] = c.email1
+            d["Email Address 1"] = _strip_bad_chars(c.email1)
         if c.email2 is not None:
-            d["Email Address 2"] = c.email2
+            d["Email Address 2"] = _strip_bad_chars(c.email2)
         if c.authemail is not None:
-            d["Authorized Email"] = c.authemail
+            d["Authorized Email"] = _strip_bad_chars(c.authemail)
 
         if c.mobilephone is not None and len(c.mobilephone):
-            d["Mobile Phone"] = c.mobilephone
+            d["Mobile Phone"] = _strip_bad_chars(c.mobilephone)
         if c.mobile2phone is not None and len(c.mobile2phone):
-            d["Mobile 2 Phone"] = c.mobile2phone
+            d["Mobile 2 Phone"] = _strip_bad_chars(c.mobile2phone)
         if c.mobile3phone is not None and len(c.mobile3phone):
-            d["Mobile 3 Phone"] = c.mobile3phone
+            d["Mobile 3 Phone"] = _strip_bad_chars(c.mobile3phone)
         if c.otherphone is not None and len(c.otherphone):
-            d["Other Phone"] = c.otherphone
+            d["Other Phone"] = _strip_bad_chars(c.otherphone)
         if c.other2phone is not None and len(c.other2phone):
-            d["Other 2 Phone"] = c.other2phone
+            d["Other 2 Phone"] = _strip_bad_chars(c.other2phone)
         if c.homephone is not None and len(c.homephone):
-            d["Home Phone"] = c.homephone
+            d["Home Phone"] = _strip_bad_chars(c.homephone)
         if c.home2phone is not None and len(c.home2phone):
-            d["Home 2 Phone"] = c.home2phone
+            d["Home 2 Phone"] = _strip_bad_chars(c.home2phone)
         if c.workphone is not None and len(c.workphone):
-            d["Work Phone"] = c.workphone
+            d["Work Phone"] = _strip_bad_chars(c.workphone)
         if c.work2phone is not None and len(c.work2phone):
-            d["Work 2 Phone"] = c.work2phone
+            d["Work 2 Phone"] = _strip_bad_chars(c.work2phone)
         if c.asstphone is not None and len(c.asstphone):
-            d["Assistant Phone"] = c.asstphone
+            d["Assistant Phone"] = _strip_bad_chars(c.asstphone)
         if c.mainphone is not None and len(c.mainphone):
-            d["Main Phone"] = c.mainphone
+            d["Main Phone"] = _strip_bad_chars(c.mainphone)
         if c.workfax is not None and len(c.workfax):
-            d["Work Fax"] = c.workfax
+            d["Work Fax"] = _strip_bad_chars(c.workfax)
 
         if c.fn is not None:
             d["First Name"] = c.fn
@@ -262,32 +266,32 @@ class AirtableContact(Contact):
             d["Nickname"] = c.nn
 
         if c.prefix is not None:
-            d["Prefix"] = c.prefix
+            d["Prefix"] = _strip_bad_chars(c.prefix)
         if c.suffix is not None:
-            d["Suffix"] = c.suffix
+            d["Suffix"] = _strip_bad_chars(c.suffix)
         if c.title is not None:
-            d["Title"] = c.title
+            d["Title"] = _strip_bad_chars(c.title)
 
         if c.spouse is not None:
-            d["Spouse"] = c.spouse
+            d["Spouse"] = _strip_bad_chars(c.spouse)
         if c.child1 is not None:
-            d["Child 1"] = c.child1
+            d["Child 1"] = _strip_bad_chars(c.child1)
         if c.child2 is not None:
-            d["Child 2"] = c.child2
+            d["Child 2"] = _strip_bad_chars(c.child2)
         if c.child3 is not None:
-            d["Child 3"] = c.child3
+            d["Child 3"] = _strip_bad_chars(c.child3)
         if c.child4 is not None:
-            d["Child 4"] = c.child4
+            d["Child 4"] = _strip_bad_chars(c.child4)
 
         if c.url is not None:
             d["URL"] = c.url
 
         if c.org is not None:
-            d["Organization"] = c.org
+            d["Organization"] = _strip_bad_chars(c.org)
         if c.jobtitle is not None:
-            d["Job Title"] = c.jobtitle
+            d["Job Title"] = _strip_bad_chars(c.jobtitle)
         if c.company is not None:
-            d["Company"] = c.company
+            d["Company"] = _strip_bad_chars(c.company)
         if c.notes is not None:
             d["Notes"] = c.notes
         if c.social is not None:
@@ -368,7 +372,8 @@ class AirtableContact(Contact):
         c.email1 = _rowget(row, 'Email Address 1')
         c.email2 = _rowget(row, 'Email Address 2')
         if c.email1 == c.email2:
-            c.email2 = None
+            #c.email2 = None
+            pass
 
         c.authemail = _rowget(row, 'Authorized Email')
         c.mainphone = Phone.make(_rowget(row, 'Main Phone'), PhoneType.Main).stringify()
@@ -378,20 +383,25 @@ class AirtableContact(Contact):
         c.work2phone = Phone.make(_rowget(row, 'Work 2 Phone'), PhoneType.Work2).stringify()
 
         if c.homephone == c.home2phone:
-            c.home2phone = None
+            pass
+            #c.home2phone = None
         if c.workphone == c.work2phone:
-            c.work2phone = None
+            pass
+            #c.work2phone = None
 
         c.asstphone = Phone.make(_rowget(row, 'Assistant Phone'), PhoneType.Asst).stringify()
         c.mobilephone = Phone.make(_rowget(row, 'Mobile Phone'), PhoneType.Mobile).stringify()
         c.mobile2phone = Phone.make(_rowget(row, 'Mobile 2 Phone'), PhoneType.Mobile2).stringify()
         c.mobile3phone = Phone.make(_rowget(row, 'Mobile 3 Phone'), PhoneType.Mobile3).stringify()
         if c.mobilephone == c.mobile2phone:
-            c.mobile2phone = None
+            pass
+            #c.mobile2phone = None
         if c.mobilephone == c.mobile3phone:
-            c.mobile3phone = None
+            pass
+            #c.mobile3phone = None
         if c.mobile2phone == c.mobile3phone:
-            c.mobile3phone = None
+            pass
+            #c.mobile3phone = None
 
         c.otherphone = Phone.make(_rowget(row, 'Other Phone'), PhoneType.Other).stringify()
         c.other2phone = Phone.make(_rowget(row, 'Other 2 Phone'), PhoneType.Other2).stringify()
@@ -431,5 +441,8 @@ class AirtableContact(Contact):
         c.isspousemain = _rowget(row, "Use Spouse As Main Surname (default no)", None, bool)
         c.created = _rowget(row, "Created")
         c.lmod = _rowget(row, "Last Modified")
-        c.lmoddt = dateutil.parser.isoparse(c.lmod)
+        try:
+            c.lmoddt = dateutil.parser.isoparse(c.lmod)
+        except ValueError:
+            c.lmoddt = None
         return c

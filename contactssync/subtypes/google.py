@@ -15,7 +15,13 @@ from ..base import Contact
 from ..connect import Connection
 from ..addresses import Address
 from ..types import PhoneType, ContactType
-from ..utils import _rowget, _str_not_none, _date_to_ymd, _make_dict_from_list
+from ..utils import (
+    _rowget,
+    _str_not_none,
+    _date_to_ymd,
+    _make_dict_from_list,
+    _strip_bad_chars,
+)
 from ..phones import Phone
 from ..addresses import Address
 
@@ -98,15 +104,17 @@ class GoogleConnection(Connection):
             personFields=PERSON_FIELDS,
         ).execute()
 
-    def get(self, id):
+    def get(self, id, convert=True):
         if ( isinstance(id, collections.Iterable)
                and not isinstance(id, str)):
             return self._get_batch(id)
-        return self._convert_to_contact_and_drop_none(
-            self._get_raw(id)
-        )
+        vals = self._get_raw(id)
+        if convert:
+            return self._convert_to_contact_and_drop_none(vals)
+        return vals
 
-    def get_by_name(self, fn, ln):
+
+    def get_by_name(self, fn, ln, convert=True):
         results = self._service.people().searchContacts(
             pageSize=100,
             query=f"{fn} {ln}",
@@ -118,7 +126,9 @@ class GoogleConnection(Connection):
                 "Error: found too many results (>100) when looking for "
                 f"contact with name {fn} {ln}."
             )
-        return self._convert_to_contact_and_drop_none(vals)
+        if convert:
+            return self._convert_to_contact_and_drop_none(vals)
+        return vals
 
     @staticmethod
     def _strip_non_create_fields(d, strip_etag=True):
@@ -287,12 +297,12 @@ class GoogleAddress(Address):
         if addr is None or addr.countfields() == 0:
             return d
         d["type"] = addr._type.value
-        d["streetAddress"] = _str_not_none(getattr(addr, "addr1", ""))
-        d["extendedAddress"] = _str_not_none(getattr(addr, "addr2", ""))
-        d["city"] = _str_not_none(getattr(addr, "city", ""))
-        d["region"] = _str_not_none(getattr(addr, "region", ""))
-        d["postalCode"] = _str_not_none(getattr(addr, "zip", ""))
-        d["country"] = _str_not_none(getattr(addr, "country", ""))
+        d["streetAddress"] = _strip_bad_chars(_str_not_none(getattr(addr, "addr1", "")))
+        d["extendedAddress"] = _strip_bad_chars(_str_not_none(getattr(addr, "addr2", "")))
+        d["city"] = _strip_bad_chars(_str_not_none(getattr(addr, "city", "")))
+        d["region"] = _strip_bad_chars(_str_not_none(getattr(addr, "region", "")))
+        d["postalCode"] = _strip_bad_chars(_str_not_none(getattr(addr, "zip", "")))
+        d["country"] = _strip_bad_chars(_str_not_none(getattr(addr, "country", "")))
         return d
 
 class GoogleContact(Contact):
@@ -314,27 +324,27 @@ class GoogleContact(Contact):
     @classmethod
     def to_api(cls, c, include_etag=True, **kwargs):
         d = {}
-        d["resourceName"] = c._id
+        d["resourceName"] = _strip_bad_chars(c._id)
 
         if include_etag:
-            d["etag"] = c._etag
+            d["etag"] = _strip_bad_chars(c._etag)
 
         names = {}
         if c.fn is not None:
-            names["givenName"] = c.fn
+            names["givenName"] = _strip_bad_chars(c.fn)
         if c.ln is not None:
-            names["familyName"] = c.ln
+            names["familyName"] = _strip_bad_chars(c.ln)
         if c.mn is not None:
-            names["middleName"] = c.mn
+            names["middleName"] = _strip_bad_chars(c.mn)
         if c.prefix is not None:
-            names["honorificPrefix"] = c.prefix
+            names["honorificPrefix"] = _strip_bad_chars(c.prefix)
         if c.suffix is not None:
-            names["honorificSuffix"] = c.suffix
+            names["honorificSuffix"] = _strip_bad_chars(c.suffix)
         d["names"] = names
 
         nicknames = []
         if c.nn is not None:
-            nicknames.append({"value": c.nn})
+            nicknames.append({"value": _strip_bad_chars(c.nn)})
         d["nicknames"] = nicknames
 
         addrs = []
@@ -346,38 +356,38 @@ class GoogleContact(Contact):
 
         emails = []
         if c.email1 is not None:
-            emails.append({"type": "Home", "value": c.email1})
+            emails.append({"type": "Home", "value": _strip_bad_chars(c.email1)})
         if c.email2 is not None:
-            emails.append({"type": "Home2", "value": c.email2})
+            emails.append({"type": "Home2", "value": _strip_bad_chars(c.email2)})
         if c.authemail is not None:
-            emails.append({"type": "Authorized", "value": c.authemail})
+            emails.append({"type": "Authorized", "value": _strip_bad_chars(c.authemail)})
         d["emailAddresses"] = emails
 
         phones = []
         if c.mobilephone is not None and len(c.mobilephone):
-            phones.append({"type": "Mobile", "value": c.mobilephone})
+            phones.append({"type": "Mobile", "value": _strip_bad_chars(c.mobilephone)})
         if c.mobile2phone is not None and len(c.mobile2phone):
-            phones.append({"type": "Mobile2", "value": c.mobile2phone})
+            phones.append({"type": "Mobile2", "value": _strip_bad_chars(c.mobile2phone)})
         if c.mobile3phone is not None and len(c.mobile3phone):
-            phones.append({"type": "Mobile3", "value": c.mobile3phone})
+            phones.append({"type": "Mobile3", "value": _strip_bad_chars(c.mobile3phone)})
         if c.otherphone is not None and len(c.otherphone):
-            phones.append({"type": "Other", "value": c.otherphone})
+            phones.append({"type": "Other", "value": _strip_bad_chars(c.otherphone)})
         if c.other2phone is not None and len(c.other2phone):
-            phones.append({"type": "Other2", "value": c.other2phone})
+            phones.append({"type": "Other2", "value": _strip_bad_chars(c.other2phone)})
         if c.homephone is not None and len(c.homephone):
-            phones.append({"type": "Home", "value": c.homephone})
+            phones.append({"type": "Home", "value": _strip_bad_chars(c.homephone)})
         if c.home2phone is not None and len(c.home2phone):
-            phones.append({"type": "Home2", "value": c.home2phone})
+            phones.append({"type": "Home2", "value": _strip_bad_chars(c.home2phone)})
         if c.workphone is not None and len(c.workphone):
-            phones.append({"type": "Work", "value": c.workphone})
+            phones.append({"type": "Work", "value": _strip_bad_chars(c.workphone)})
         if c.work2phone is not None and len(c.work2phone):
-            phones.append({"type": "Work2", "value": c.work2phone})
+            phones.append({"type": "Work2", "value": _strip_bad_chars(c.work2phone)})
         if c.asstphone is not None and len(c.asstphone):
-            phones.append({"type": "Assistant", "value": c.asstphone})
+            phones.append({"type": "Assistant", "value": _strip_bad_chars(c.asstphone)})
         if c.mainphone is not None and len(c.mainphone):
-            phones.append({"type": "Main", "value": c.mainphone})
+            phones.append({"type": "Main", "value": _strip_bad_chars(c.mainphone)})
         if c.workfax is not None and len(c.workfax):
-            phones.append({"type": "Fax", "value": c.workfax})
+            phones.append({"type": "Fax", "value": _strip_bad_chars(c.workfax)})
         d["phoneNumbers"] = phones
 
         bios = []
@@ -414,61 +424,61 @@ class GoogleContact(Contact):
             org["name"] = c.org
             if c.org is None:
                 if c.company is not None:
-                    org["name"] = c.company
+                    org["name"] = _strip_bad_chars(c.company)
                 else:
                     org["name"] = "Unknown"
             if c.jobtitle is not None:
-                org["title"] = c.jobtitle
+                org["title"] = _strip_bad_chars(c.jobtitle)
             organizations.append(org)
         d["organizations"] = organizations
 
         relations = []
         if c.spouse is not None:
-            relations.append({"type": "Spouse", "person": c.spouse})
+            relations.append({"type": "Spouse", "person": _strip_bad_chars(c.spouse)})
         if c.child1 is not None:
-            relations.append({"type": "Child1", "person": c.child1})
+            relations.append({"type": "Child1", "person": _strip_bad_chars(c.child1)})
         if c.child2 is not None:
-            relations.append({"type": "Child2", "person": c.child2})
+            relations.append({"type": "Child2", "person": _strip_bad_chars(c.child2)})
         if c.child3 is not None:
-            relations.append({"type": "Child3", "person": c.child3})
+            relations.append({"type": "Child3", "person": _strip_bad_chars(c.child3)})
         if c.child4 is not None:
-            relations.append({"type": "Child4", "person": c.child4})
+            relations.append({"type": "Child4", "person": _strip_bad_chars(c.child4)})
         d["relations"] = relations
 
         photos = []
         if c.photo is not None:
-            photos.append({"url": c.photo})
+            photos.append({"url": _strip_bad_chars(c.photo)})
         d["photos"] = photos
 
         userdef = []
         if c.title is not None:
-            userdef.append({"key": "Title", "value": c.title})
+            userdef.append({"key": "Title", "value": _strip_bad_chars(c.title)})
         if c.social is not None:
-            userdef.append({"key": "Social", "value": c.social})
+            userdef.append({"key": "Social", "value": _strip_bad_chars(c.social)})
         if c.uid is not None:
-            userdef.append({"key": "UniqueID", "value": c.uid})
+            userdef.append({"key": "UniqueID", "value": _strip_bad_chars(c.uid)})
         if c.atid is not None:
-            userdef.append({"key": "AirtableID", "value": c.atid})
+            userdef.append({"key": "AirtableID", "value": _strip_bad_chars(c.atid)})
         if c.cplusid is not None:
-            userdef.append({"key": "CPlusID", "value": c.cplusid})
+            userdef.append({"key": "CPlusID", "value": _strip_bad_chars(c.cplusid)})
         if c.gid is not None:
-            userdef.append({"key": "OldGoogleID", "value": c.gid})
+            userdef.append({"key": "OldGoogleID", "value": _strip_bad_chars(c.gid)})
         if c.gcid is not None:
-            userdef.append({"key": "GoogleContactID", "value": c.gcid})
+            userdef.append({"key": "GoogleContactID", "value": _strip_bad_chars(c.gcid)})
         if c.altgcid is not None:
-            userdef.append({"key": "AltGoogleContactID", "value": c.altgcid})
+            userdef.append({"key": "AltGoogleContactID", "value": _strip_bad_chars(c.altgcid)})
         if c.customterm is not None:
             userdef.append(
-                {"key": "Custom Additional Mailing Term", "value": c.customterm}
+                {"key": "Custom Additional Mailing Term", "value": _strip_bad_chars(c.customterm)}
             )
         if c.customrepl is not None:
             userdef.append(
-                {"key": "Custom Replacement Mailing Term", "value": c.customrepl}
+                {"key": "Custom Replacement Mailing Term", "value": _strip_bad_chars(c.customrepl)}
             )
         if c.source is not None:
-            userdef.append({"key": "Source", "value": c.source})
+            userdef.append({"key": "Source", "value": _strip_bad_chars(c.source)})
         if c.spouseid is not None:
-            userdef.append({"key": "SpouseID", "value": c.spouseid})
+            userdef.append({"key": "SpouseID", "value": _strip_bad_chars(c.spouseid)})
         if c.category is not None and len(c.category):
             userdef.append({"key": "Category", "value": ";".join(c.category)})
         if c.holidaylists is not None and len(c.holidaylists):
@@ -566,6 +576,8 @@ class GoogleContact(Contact):
             row.get('emailAddresses', {}), keyname="formattedType"
         )
         emails = []
+        if c.ln == "Asher" and c.fn == "Scott":
+            print(emails_dict)
         for _type in ["Home", "Home2", "Work", "Work2", "Other", "Other2"]:
             val = emails_dict.get(_type)
             if val is not None:
@@ -576,6 +588,8 @@ class GoogleContact(Contact):
         if len(emails) > 1:
             c.email2 = emails[1]
         c.authemail = _rowget(emails_dict, "Authorized")
+        if c.ln == "Asher" and c.fn == "Scott":
+            print(f"e1: {c.email1} e2: {c.email2} ae: {c.authemail}")
 
         phones_dict = _make_dict_from_list(
             row.get('phoneNumbers', {}), keyname="formattedType", valname="value"
@@ -597,9 +611,11 @@ class GoogleContact(Contact):
         ).stringify()
 
         if c.homephone == c.home2phone:
-            c.home2phone = None
+            pass
+            #c.home2phone = None
         if c.workphone == c.work2phone:
-            c.work2phone = None
+            pass
+            #c.work2phone = None
 
         c.asstphone = Phone.make(
             _rowget(phones_dict, 'Assistant'), PhoneType.Asst
@@ -614,10 +630,13 @@ class GoogleContact(Contact):
             _rowget(phones_dict, 'Mobile3'), PhoneType.Mobile3
         ).stringify()
         if c.mobilephone == c.mobile2phone:
+            pass
             c.mobile2phone = None
         if c.mobilephone == c.mobile3phone:
+            pass
             c.mobile3phone = None
         if c.mobile2phone == c.mobile3phone:
+            pass
             c.mobile3phone = None
 
         c.otherphone = Phone.make(
