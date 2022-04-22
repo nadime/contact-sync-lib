@@ -1,13 +1,14 @@
 
 from distutils.core import setup
 from os.path import exists
+from contactsync import __version__
 
 setup(
       name = 'contactssync',         # How you named your package folder (MyLib)
       packages = ['contactssync','contactssync.subtypes'],
       install_package_data=True,
       package_data={'': ['__data__/*.csv']},
-      version = '0.1.23',      # Start with a small number and increase it with every change you make
+      version = __version__,      # Start with a small number and increase it with every change you make
       license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
       description = 'Some useful code for connecting to contact services and objectifying/normalizing contact records, especially for the purpose of synchronizing information between multiple services.',   # Give a short description about your library
       author = 'Scott Asher',                   # Type in your name
